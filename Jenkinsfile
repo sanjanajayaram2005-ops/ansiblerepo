@@ -2,26 +2,44 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'
+        maven 'maven'
+        jdk 'JDK'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                git 'https://github.com/sanjanajayaram2005-ops/ansiblerepo.git'
+                checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean package'
             }
         }
 
-        stage('Deploy with Ansible') {
+        stage('Archive') {
             steps {
-                sh 'ansible-playbook deploy.yml'
+                archiveArtifacts artifacts: 'target/*.war'
             }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'ansible-playbook ansible/playbook.yml -i ansible/hosts.ini'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and Deployment Successful!'
+        }
+
+        failure {
+            echo 'Build Failed!'
         }
     }
 }
